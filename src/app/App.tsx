@@ -53,6 +53,12 @@ export default function App() {
   };
 
   const handleNavigate = (screen: string) => {
+    if (screen === 'auth') {
+      setUserData(null);
+      setCurrentScreen('auth');
+      return;
+    }
+
     setCurrentScreen(screen as Screen);
   };
 

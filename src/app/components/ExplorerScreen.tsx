@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useAstronomy } from '../hooks/useAstronomy';
 import { useLocation } from '../hooks/useLocation';
+import { RealisticSolarSystem3D } from './RealisticSolarSystem3D';
 
 interface ExplorerScreenProps {
   onNavigate: (screen: string) => void;
@@ -187,106 +188,11 @@ export function ExplorerScreen({ onNavigate }: ExplorerScreenProps) {
               </div>
 
               {/* Solar System Container */}
-              <div className="relative flex-1 bg-black/40 rounded-lg overflow-hidden flex items-center justify-center">
-                {/* Sun */}
-                <motion.div
-                  className="absolute top-1/2 left-1/2 w-12 h-12 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 shadow-[0_0_30px_rgba(255,165,0,0.6)] transform -translate-x-1/2 -translate-y-1/2 z-20"
-                  animate={isAnimating ? { 
-                    rotate: 360,
-                    boxShadow: [
-                      '0 0 30px rgba(255,165,0,0.6)',
-                      '0 0 50px rgba(255,165,0,0.8)',
-                      '0 0 30px rgba(255,165,0,0.6)'
-                    ]
-                  } : {}}
-                  transition={{ 
-                    rotate: { duration: 10, repeat: Infinity, ease: "linear" },
-                    boxShadow: { duration: 2, repeat: Infinity }
-                  }}
-                />
-
-                {/* Planets */}
-                {planets.map((planet) => (
-                  <motion.div
-                    key={planet.name}
-                    className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2"
-                    style={{ 
-                      width: planet.distance * 2, 
-                      height: planet.distance * 2 
-                    }}
-                  >
-                    {/* Orbital Path */}
-                    <div 
-                      className="absolute inset-0 border border-white/20 rounded-full"
-                      style={{ borderStyle: 'dashed' }}
-                    />
-                    
-                    {/* Planet with Real Base Helio Position */}
-                    <motion.div
-                      className="absolute rounded-full cursor-pointer hover:scale-125 transition-transform z-30"
-                      style={{
-                        width: planet.size,
-                        height: planet.size,
-                        backgroundColor: planet.color,
-                        top: -planet.size / 2,
-                        left: planet.distance - planet.size / 2,
-                        boxShadow: `0 0 ${planet.size * 0.8}px ${planet.color}60, inset 0 0 ${planet.size * 0.3}px rgba(255,255,255,0.1)`,
-                        background: `radial-gradient(circle at 30% 30%, ${planet.color}FF, ${planet.color}AA)`,
-                        transformOrigin: `${-planet.distance + planet.size / 2}px ${planet.size / 2}px`,
-                        transform: `rotate(${planet.currentPosition}deg)`
-                      }}
-                      animate={isAnimating ? {
-                        rotate: [planet.currentPosition, planet.currentPosition + 360]
-                      } : {
-                        rotate: planet.currentPosition
-                      }}
-                      transition={{
-                        duration: (planet.orbital_period / 15) / speedMultiplier,
-                        repeat: Infinity,
-                        ease: "linear"
-                      }}
-                      onClick={() => handlePlanetClick(planet)}
-                      whileHover={{ scale: 1.3 }}
-                      whileTap={{ scale: 0.9 }}
-                    >
-                      {/* Planet rings for Saturn */}
-                      {planet.name === 'Saturn' && (
-                        <>
-                          <div 
-                            className="absolute border border-white/30 rounded-full"
-                            style={{
-                              width: planet.size * 1.8,
-                              height: planet.size * 1.8,
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)'
-                            }}
-                          />
-                          <div 
-                            className="absolute border border-white/20 rounded-full"
-                            style={{
-                              width: planet.size * 2.2,
-                              height: planet.size * 2.2,
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -50%)'
-                            }}
-                          />
-                        </>
-                      )}
-                      
-                      {/* Planet label */}
-                      <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                        <span className="text-white text-[10px] font-medium bg-black/60 px-1.5 py-0.5 rounded border border-white/10">
-                          {planet.name}
-                        </span>
-                      </div>
-                    </motion.div>
-                  </motion.div>
-                ))}
+              <div className="relative flex-1 bg-black/40 rounded-lg overflow-hidden">
+                <RealisticSolarSystem3D />
 
                 {/* View Mode Indicator */}
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 z-50">
                   <GlassCard className="px-3 py-1" intensity="light">
                     <span className="text-white text-xs flex items-center gap-1">
                       <Zap className="w-3 h-3 text-cyan-400" />

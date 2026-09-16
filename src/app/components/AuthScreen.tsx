@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { supabase } from '../../lib/supabase';
 import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -22,17 +23,68 @@ export function AuthScreen({ onAuthComplete }: AuthScreenProps) {
     age: ''
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Store user data in localStorage for age-based routing
-    if (!isLogin) {
-      localStorage.setItem('userData', JSON.stringify({
-        name: formData.name,
+
+    if (isLogin) {
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
-        age: parseInt(formData.age)
-      }));
+        password: formData.password,
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      if (data.user) {
+        const metadata = data.user.user_metadata || {};
+        const age = Number(metadata.age);
+
+        localStorage.setItem('userData', JSON.stringify({
+          name: metadata.name || formData.email.split('@')[0],
+          email: data.user.email || formData.email,
+          age: Number.isFinite(age) ? age : 18
+        }));
+
+        onAuthComplete();
+      }
+    } else {
+      const age = parseInt(formData.age, 10);
+
+      if (!formData.name || !formData.email || !formData.password || !age) {
+        alert('Please fill all fields.');
+        return;
+      }
+
+      const { data, error } = await supabase.auth.signUp({
+        email: formData.email,
+        password: formData.password,
+        options: {
+          data: {
+            name: formData.name,
+            age: age
+          }
+        }
+      });
+
+      if (error) {
+        alert(error.message);
+        return;
+      }
+
+      if (data.user && data.session) {
+        localStorage.setItem('userData', JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          age: age
+        }));
+
+        onAuthComplete();
+      } else {
+        alert('Account created! Please check your email and verify your account before logging in.');
+      }
     }
-    onAuthComplete();
   };
 
   const handleInputChange = (field: string, value: string) => {

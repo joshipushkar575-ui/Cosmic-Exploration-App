@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { supabase } from '../../lib/supabase';
 import { Button } from './ui/button';
 import { Avatar } from './ui/avatar';
 import { Badge } from './ui/badge';
@@ -54,6 +55,12 @@ interface Achievement {
 }
 
 export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    localStorage.removeItem('userData');
+    onNavigate('auth');
+  };
   const userStats = {
     level: 8,
     xp: 2450,
@@ -306,6 +313,14 @@ export function ProfileScreen({ onNavigate }: ProfileScreenProps) {
 
               <Button className="w-full bg-gradient-to-r from-violet-500 to-cyan-500 text-white">
                 Edit Profile
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={handleLogout}
+                className="w-full mt-3 border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              >
+                Logout
               </Button>
             </GlassCard>
 
