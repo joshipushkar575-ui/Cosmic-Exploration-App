@@ -1,0 +1,524 @@
+import { useState, useEffect } from 'react';
+import { ArrowLeft, Award, Star, Lock, CheckCircle, Target, Zap, Users, Clock } from 'lucide-react';
+import { GlassCard } from './GlassCard';
+import { motion } from 'motion/react';
+
+interface GameAchievementsProps {
+  gameProgress: {
+    score: number;
+    level: number;
+    resourcesCollected: number;
+    planetsUnlocked: string[];
+    achievements: string[];
+  };
+  onBack: () => void;
+}
+
+interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  category: 'exploration' | 'collection' | 'progression' | 'special';
+  difficulty: 'bronze' | 'silver' | 'gold' | 'platinum';
+  requirement: {
+    type: 'score' | 'level' | 'resources' | 'planets' | 'special';
+    value: number;
+  };
+  reward: {
+    xp: number;
+    title?: string;
+  };
+  isUnlocked: boolean;
+  unlockedAt?: string;
+}
+
+interface AchievementStats {
+  totalAchievements: number;
+  unlockedAchievements: number;
+  bronzeCount: number;
+  silverCount: number;
+  goldCount: number;
+  platinumCount: number;
+  completionPercentage: number;
+}
+
+export function GameAchievements({ gameProgress, onBack }: GameAchievementsProps) {
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [stats, setStats] = useState<AchievementStats>({
+    totalAchievements: 0,
+    unlockedAchievements: 0,
+    bronzeCount: 0,
+    silverCount: 0,
+    goldCount: 0,
+    platinumCount: 0,
+    completionPercentage: 0
+  });
+
+  useEffect(() => {
+    const allAchievements: Achievement[] = [
+      // Exploration Achievements
+      {
+        id: 'first_steps',
+        title: 'First Steps',
+        description: 'Complete your first exploration mission',
+        icon: '👣',
+        category: 'exploration',
+        difficulty: 'bronze',
+        requirement: { type: 'level', value: 1 },
+        reward: { xp: 100 },
+        isUnlocked: false
+      },
+      {
+        id: 'planet_hopper',
+        title: 'Planet Hopper',
+        description: 'Unlock 5 different planets',
+        icon: '🪐',
+        category: 'exploration',
+        difficulty: 'silver',
+        requirement: { type: 'planets', value: 5 },
+        reward: { xp: 300, title: 'Explorer' }
+      },
+      {
+        id: 'solar_master',
+        title: 'Solar System Master',
+        description: 'Unlock all 8 planets in our solar system',
+        icon: '☀️',
+        category: 'exploration',
+        difficulty: 'platinum',
+        requirement: { type: 'planets', value: 8 },
+        reward: { xp: 1000, title: 'System Master' }
+      },
+
+      // Collection Achievements
+      {
+        id: 'first_crystal',
+        title: 'Crystal Collector',
+        description: 'Collect your first cosmic crystal',
+        icon: '💎',
+        category: 'collection',
+        difficulty: 'bronze',
+        requirement: { type: 'resources', value: 1 },
+        reward: { xp: 50 }
+      },
+      {
+        id: 'resource_hunter',
+        title: 'Resource Hunter',
+        description: 'Collect 100 resources across all missions',
+        icon: '⚡',
+        category: 'collection',
+        difficulty: 'silver',
+        requirement: { type: 'resources', value: 100 },
+        reward: { xp: 400, title: 'Hunter' }
+      },
+      {
+        id: 'cosmic_hoarder',
+        title: 'Cosmic Hoarder',
+        description: 'Collect 500 resources - you love collecting!',
+        icon: '🏆',
+        category: 'collection',
+        difficulty: 'gold',
+        requirement: { type: 'resources', value: 500 },
+        reward: { xp: 750, title: 'Hoarder' }
+      },
+
+      // Progression Achievements
+      {
+        id: 'level_up',
+        title: 'Level Up!',
+        description: 'Reach level 5',
+        icon: '⬆️',
+        category: 'progression',
+        difficulty: 'bronze',
+        requirement: { type: 'level', value: 5 },
+        reward: { xp: 200 }
+      },
+      {
+        id: 'experienced_explorer',
+        title: 'Experienced Explorer',
+        description: 'Reach level 10',
+        icon: '🎯',
+        category: 'progression',
+        difficulty: 'silver',
+        requirement: { type: 'level', value: 10 },
+        reward: { xp: 500, title: 'Veteran' }
+      },
+      {
+        id: 'space_legend',
+        title: 'Space Legend',
+        description: 'Reach level 20',
+        icon: '👑',
+        category: 'progression',
+        difficulty: 'gold',
+        requirement: { type: 'level', value: 20 },
+        reward: { xp: 1000, title: 'Legend' }
+      },
+
+      // Score Achievements
+      {
+        id: 'high_scorer',
+        title: 'High Scorer',
+        description: 'Reach 1,000 points',
+        icon: '🎮',
+        category: 'progression',
+        difficulty: 'bronze',
+        requirement: { type: 'score', value: 1000 },
+        reward: { xp: 150 }
+      },
+      {
+        id: 'score_master',
+        title: 'Score Master',
+        description: 'Reach 10,000 points',
+        icon: '🏅',
+        category: 'progression',
+        difficulty: 'silver',
+        requirement: { type: 'score', value: 10000 },
+        reward: { xp: 600, title: 'Master' }
+      },
+      {
+        id: 'cosmic_champion',
+        title: 'Cosmic Champion',
+        description: 'Reach 50,000 points',
+        icon: '🌟',
+        category: 'progression',
+        difficulty: 'platinum',
+        requirement: { type: 'score', value: 50000 },
+        reward: { xp: 1500, title: 'Champion' }
+      },
+
+      // Special Achievements
+      {
+        id: 'speed_demon',
+        title: 'Speed Demon',
+        description: 'Complete a level in under 2 minutes',
+        icon: '⚡',
+        category: 'special',
+        difficulty: 'gold',
+        requirement: { type: 'special', value: 1 },
+        reward: { xp: 800, title: 'Speed Demon' }
+      },
+      {
+        id: 'perfectionist',
+        title: 'Perfectionist',
+        description: 'Complete a level with 100% resources collected',
+        icon: '💯',
+        category: 'special',
+        difficulty: 'gold',
+        requirement: { type: 'special', value: 1 },
+        reward: { xp: 900, title: 'Perfectionist' }
+      },
+      {
+        id: 'daily_explorer',
+        title: 'Daily Explorer',
+        description: 'Play for 7 consecutive days',
+        icon: '📅',
+        category: 'special',
+        difficulty: 'silver',
+        requirement: { type: 'special', value: 7 },
+        reward: { xp: 400, title: 'Dedicated' }
+      }
+    ];
+
+    // Check which achievements are unlocked
+    const updatedAchievements = allAchievements.map(achievement => {
+      let isUnlocked = gameProgress.achievements.includes(achievement.id);
+      
+      if (!isUnlocked) {
+        switch (achievement.requirement.type) {
+          case 'score':
+            isUnlocked = gameProgress.score >= achievement.requirement.value;
+            break;
+          case 'level':
+            isUnlocked = gameProgress.level >= achievement.requirement.value;
+            break;
+          case 'resources':
+            isUnlocked = gameProgress.resourcesCollected >= achievement.requirement.value;
+            break;
+          case 'planets':
+            isUnlocked = gameProgress.planetsUnlocked.length >= achievement.requirement.value;
+            break;
+          case 'special':
+            // These would be unlocked through specific gameplay events
+            isUnlocked = false;
+            break;
+        }
+      }
+
+      return {
+        ...achievement,
+        isUnlocked,
+        unlockedAt: isUnlocked ? new Date().toLocaleDateString() : undefined
+      };
+    });
+
+    setAchievements(updatedAchievements);
+
+    // Calculate stats
+    const totalAchievements = updatedAchievements.length;
+    const unlockedAchievements = updatedAchievements.filter(a => a.isUnlocked).length;
+    const bronzeCount = updatedAchievements.filter(a => a.isUnlocked && a.difficulty === 'bronze').length;
+    const silverCount = updatedAchievements.filter(a => a.isUnlocked && a.difficulty === 'silver').length;
+    const goldCount = updatedAchievements.filter(a => a.isUnlocked && a.difficulty === 'gold').length;
+    const platinumCount = updatedAchievements.filter(a => a.isUnlocked && a.difficulty === 'platinum').length;
+    const completionPercentage = Math.round((unlockedAchievements / totalAchievements) * 100);
+
+    setStats({
+      totalAchievements,
+      unlockedAchievements,
+      bronzeCount,
+      silverCount,
+      goldCount,
+      platinumCount,
+      completionPercentage
+    });
+  }, [gameProgress]);
+
+  const getDifficultyColor = (difficulty: string) => {
+    switch (difficulty) {
+      case 'bronze':
+        return 'from-orange-600 to-yellow-700';
+      case 'silver':
+        return 'from-gray-400 to-gray-600';
+      case 'gold':
+        return 'from-yellow-400 to-yellow-600';
+      case 'platinum':
+        return 'from-cyan-400 to-blue-500';
+      default:
+        return 'from-gray-600 to-gray-800';
+    }
+  };
+
+  const getDifficultyIcon = (difficulty: string) => {
+    switch (difficulty) {
+      case 'bronze':
+        return '🥉';
+      case 'silver':
+        return '🥈';
+      case 'gold':
+        return '🥇';
+      case 'platinum':
+        return '💎';
+      default:
+        return '⭐';
+    }
+  };
+
+  const filteredAchievements = achievements.filter(achievement => {
+    if (activeCategory === 'all') return true;
+    if (activeCategory === 'unlocked') return achievement.isUnlocked;
+    if (activeCategory === 'locked') return !achievement.isUnlocked;
+    return achievement.category === activeCategory;
+  });
+
+  const categories = [
+    { id: 'all', label: 'All', icon: '📋', count: achievements.length },
+    { id: 'unlocked', label: 'Unlocked', icon: '✅', count: stats.unlockedAchievements },
+    { id: 'locked', label: 'Locked', icon: '🔒', count: achievements.length - stats.unlockedAchievements },
+    { id: 'exploration', label: 'Exploration', icon: '🚀', count: achievements.filter(a => a.category === 'exploration').length },
+    { id: 'collection', label: 'Collection', icon: '💎', count: achievements.filter(a => a.category === 'collection').length },
+    { id: 'progression', label: 'Progression', icon: '📈', count: achievements.filter(a => a.category === 'progression').length },
+    { id: 'special', label: 'Special', icon: '⭐', count: achievements.filter(a => a.category === 'special').length }
+  ];
+
+  return (
+    <div className="relative z-10 p-6 space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-2 text-cyan-400 hover:text-cyan-300 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5" />
+          Back to Game
+        </button>
+        <h1 className="text-2xl bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+          Achievements
+        </h1>
+      </div>
+
+      {/* Progress Overview */}
+      <GlassCard className="p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <div className="text-center">
+            <div className="text-2xl text-cyan-400">{stats.completionPercentage}%</div>
+            <div className="text-sm text-gray-400">Complete</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl text-white">{stats.unlockedAchievements}/{stats.totalAchievements}</div>
+            <div className="text-sm text-gray-400">Unlocked</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl text-yellow-400">{stats.goldCount + stats.platinumCount}</div>
+            <div className="text-sm text-gray-400">Rare Unlocked</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl text-purple-400">{stats.platinumCount}</div>
+            <div className="text-sm text-gray-400">Platinum</div>
+          </div>
+        </div>
+
+        <div className="w-full bg-gray-700 rounded-full h-3 mb-4">
+          <div 
+            className="bg-gradient-to-r from-cyan-500 to-blue-500 h-3 rounded-full transition-all duration-1000"
+            style={{ width: `${stats.completionPercentage}%` }}
+          />
+        </div>
+
+        <div className="grid grid-cols-4 gap-4 text-center text-sm">
+          <div className="flex items-center justify-center gap-2">
+            <span>🥉</span>
+            <span className="text-orange-400">{stats.bronzeCount}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <span>🥈</span>
+            <span className="text-gray-400">{stats.silverCount}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <span>🥇</span>
+            <span className="text-yellow-400">{stats.goldCount}</span>
+          </div>
+          <div className="flex items-center justify-center gap-2">
+            <span>💎</span>
+            <span className="text-cyan-400">{stats.platinumCount}</span>
+          </div>
+        </div>
+      </GlassCard>
+
+      {/* Category Filters */}
+      <div className="flex flex-wrap gap-2">
+        {categories.map(category => (
+          <button
+            key={category.id}
+            onClick={() => setActiveCategory(category.id)}
+            className={`px-4 py-2 rounded-lg transition-all flex items-center gap-2 ${
+              activeCategory === category.id
+                ? 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'
+                : 'bg-white/5 text-gray-400 hover:bg-white/10'
+            }`}
+          >
+            <span>{category.icon}</span>
+            <span className="text-sm">{category.label}</span>
+            <span className="text-xs bg-black/30 px-2 py-1 rounded">{category.count}</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Achievements Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredAchievements.map((achievement, index) => (
+          <motion.div
+            key={achievement.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+          >
+            <GlassCard 
+              className={`p-4 transition-all duration-300 ${
+                achievement.isUnlocked 
+                  ? 'hover:bg-white/10 border-green-500/30' 
+                  : 'opacity-70 hover:opacity-90'
+              }`}
+            >
+              <div className="space-y-4">
+                {/* Header */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="text-2xl">{achievement.icon}</div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">{getDifficultyIcon(achievement.difficulty)}</span>
+                      {achievement.isUnlocked && (
+                        <CheckCircle className="w-5 h-5 text-green-400" />
+                      )}
+                      {!achievement.isUnlocked && (
+                        <Lock className="w-5 h-5 text-gray-500" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="space-y-2">
+                  <h3 className={`${achievement.isUnlocked ? 'text-white' : 'text-gray-400'}`}>
+                    {achievement.title}
+                  </h3>
+                  <p className="text-sm text-gray-400 line-clamp-2">
+                    {achievement.description}
+                  </p>
+                </div>
+
+                {/* Progress */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-400">Progress</span>
+                    <span className={achievement.isUnlocked ? 'text-green-400' : 'text-gray-400'}>
+                      {achievement.isUnlocked ? 'Complete' : 'In Progress'}
+                    </span>
+                  </div>
+                  
+                  {!achievement.isUnlocked && (
+                    <div className="text-xs text-gray-500">
+                      {achievement.requirement.type === 'score' && 
+                        `${gameProgress.score.toLocaleString()} / ${achievement.requirement.value.toLocaleString()} points`}
+                      {achievement.requirement.type === 'level' && 
+                        `Level ${gameProgress.level} / ${achievement.requirement.value}`}
+                      {achievement.requirement.type === 'resources' && 
+                        `${gameProgress.resourcesCollected} / ${achievement.requirement.value} resources`}
+                      {achievement.requirement.type === 'planets' && 
+                        `${gameProgress.planetsUnlocked.length} / ${achievement.requirement.value} planets`}
+                      {achievement.requirement.type === 'special' && 
+                        'Complete special requirements'}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reward */}
+                <div className={`text-xs p-2 rounded-lg bg-gradient-to-r ${getDifficultyColor(achievement.difficulty)}`}>
+                  <div className="flex items-center justify-between text-white">
+                    <span>Reward: {achievement.reward.xp} XP</span>
+                    {achievement.reward.title && (
+                      <span className="bg-black/30 px-2 py-1 rounded text-xs">
+                        Title: {achievement.reward.title}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {achievement.isUnlocked && achievement.unlockedAt && (
+                  <div className="text-xs text-gray-500 text-center">
+                    Unlocked on {achievement.unlockedAt}
+                  </div>
+                )}
+              </div>
+            </GlassCard>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Recent Achievements */}
+      {stats.unlockedAchievements > 0 && (
+        <GlassCard className="p-6">
+          <h3 className="text-lg text-white mb-4 flex items-center gap-2">
+            <Award className="w-5 h-5 text-yellow-400" />
+            Recent Achievements
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {achievements
+              .filter(a => a.isUnlocked)
+              .slice(0, 3)
+              .map(achievement => (
+                <div key={achievement.id} className="flex items-center gap-3 p-3 bg-white/5 rounded-lg">
+                  <div className="text-xl">{achievement.icon}</div>
+                  <div className="flex-1">
+                    <div className="text-sm text-white">{achievement.title}</div>
+                    <div className="text-xs text-gray-400">+{achievement.reward.xp} XP</div>
+                  </div>
+                  <div className="text-lg">{getDifficultyIcon(achievement.difficulty)}</div>
+                </div>
+              ))}
+          </div>
+        </GlassCard>
+      )}
+    </div>
+  );
+}
