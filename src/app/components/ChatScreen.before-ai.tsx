@@ -1,10 +1,4 @@
-import { supabase } from "../../lib/supabase";
-import { useAstronomy } from '../hooks/useAstronomy';
-import { useAstronomicalEvents } from '../hooks/useAstronomicalEvents';
-
 import { useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
 import { motion } from 'motion/react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -33,8 +27,6 @@ interface Message {
 }
 
 export function ChatScreen({ onNavigate }: ChatScreenProps) {
-  const { planets, sun, moon, location, lastUpdated } = useAstronomy();
-  const { events } = useAstronomicalEvents();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -52,14 +44,12 @@ export function ChatScreen({ onNavigate }: ChatScreenProps) {
     { text: 'Space-Time Travel', icon: Rocket },
   ];
 
-  const handleSendMessage = async () => {
-    const messageText = inputText.trim();
-
-    if (!messageText) return;
+  const handleSendMessage = () => {
+    if (!inputText.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
-      text: messageText,
+      text: inputText,
       sender: 'user',
       timestamp: new Date()
     };
@@ -67,62 +57,27 @@ export function ChatScreen({ onNavigate }: ChatScreenProps) {
     setMessages(prev => [...prev, userMessage]);
     setInputText('');
 
-    try {
-      const { data, error } = await supabase.functions.invoke('vyom-ai', {
-        body: {
-          message: messageText,
-          messages: [...messages, userMessage].map(message => ({
-            role: message.sender === 'user' ? 'user' : 'assistant',
-            content: message.text
-          })),
-          astronomy: {
-            location,
-            lastUpdated,
-            sun,
-            moon,
-            planets,
-            events
-          }
-        }
-      });
-
-      if (error) {
-        throw error;
-      }
-
+    // Simulate AI response
+    setTimeout(() => {
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
-        text: data?.message || 'VYOM AI did not return a response.',
+        text: generateAIResponse(inputText),
         sender: 'ai',
         timestamp: new Date()
       };
-
       setMessages(prev => [...prev, aiResponse]);
-    } catch (error) {
-      console.error('VYOM AI request failed:', error);
+    }, 1000);
+  };
 
-      let errorText = error instanceof Error ? error.message : String(error);
-
-      try {
-        const context = (error as { context?: Response })?.context;
-
-        if (context) {
-          const body = await context.clone().json();
-          errorText = body?.details || body?.error || errorText;
-        }
-      } catch {
-        // Keep the original error message if the response body is not JSON.
-      }
-
-      const errorResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        text: `VYOM AI error: ${errorText}`,
-        sender: 'ai',
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, errorResponse]);
-    }
+  const generateAIResponse = (input: string): string => {
+    const responses = [
+      "That's a fascinating question about space! The universe is full of incredible mysteries waiting to be discovered.",
+      "Great observation! Did you know that there are over 100 billion galaxies in the observable universe?",
+      "Space exploration is truly amazing! Would you like to learn about any specific celestial body or phenomenon?",
+      "The cosmos holds infinite wonders. From black holes to nebulae, each discovery opens new doors to understanding.",
+      "Astronomy teaches us so much about our place in the universe. What aspect of space science interests you most?"
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -199,126 +154,7 @@ export function ChatScreen({ onNavigate }: ChatScreenProps) {
                       }`}
                       glow={message.sender === 'ai'}
                     >
-                      <div className="text-white text-sm leading-relaxed prose prose-invert max-w-none">
-  <ReactMarkdown
-    remarkPlugins={[remarkGfm]}
-    components={{
-      h1: ({ children }) => (
-        <div className="mb-5 mt-1 rounded-2xl border border-cyan-400/20 bg-gradient-to-r from-violet-500/15 via-cyan-500/10 to-transparent px-4 py-3">
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            {children}
-          </h1>
-        </div>
-      ),
-
-      h2: ({ children }) => (
-        <div className="flex items-center gap-2 mt-5 mb-3 pb-2 border-b border-white/10">
-          <h2 className="text-base sm:text-lg font-semibold text-cyan-300 tracking-wide">
-            {children}
-          </h2>
-        </div>
-      ),
-
-      h3: ({ children }) => (
-        <h3 className="text-base font-semibold text-violet-300 mt-4 mb-2">
-          {children}
-        </h3>
-      ),
-
-      p: ({ children }) => (
-        <p className="mb-3 last:mb-0 text-white/90 leading-7">
-          {children}
-        </p>
-      ),
-
-      ul: ({ children }) => (
-        <ul className="my-3 ml-1 space-y-2 list-none">
-          {children}
-        </ul>
-      ),
-
-      ol: ({ children }) => (
-        <ol className="my-3 ml-1 space-y-3 list-none counter-reset-recommendation">
-          {children}
-        </ol>
-      ),
-
-      li: ({ children }) => (
-        <li className="relative rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2.5 text-white/90 leading-6">
-          {children}
-        </li>
-      ),
-
-      strong: ({ children }) => (
-        <strong className="font-semibold text-white">
-          {children}
-        </strong>
-      ),
-
-      em: ({ children }) => (
-        <em className="text-cyan-200/90">
-          {children}
-        </em>
-      ),
-
-      blockquote: ({ children }) => (
-        <blockquote className="my-3 border-l-2 border-cyan-400/60 bg-cyan-400/5 rounded-r-xl px-4 py-3 text-white/80">
-          {children}
-        </blockquote>
-      ),
-
-      hr: () => (
-        <hr className="my-5 border-white/10" />
-      ),
-
-      table: ({ children }) => (
-        <div className="my-4 overflow-x-auto rounded-xl border border-white/10 bg-black/20">
-          <table className="w-full min-w-[620px] text-left border-collapse">
-            {children}
-          </table>
-        </div>
-      ),
-
-      thead: ({ children }) => (
-        <thead className="bg-gradient-to-r from-violet-500/20 to-cyan-500/15">
-          {children}
-        </thead>
-      ),
-
-      th: ({ children }) => (
-        <th className="border-b border-white/15 px-3 py-2.5 text-xs sm:text-sm font-semibold text-cyan-200 whitespace-nowrap">
-          {children}
-        </th>
-      ),
-
-      tbody: ({ children }) => (
-        <tbody className="divide-y divide-white/10">
-          {children}
-        </tbody>
-      ),
-
-      tr: ({ children }) => (
-        <tr className="transition-colors hover:bg-white/[0.05]">
-          {children}
-        </tr>
-      ),
-
-      td: ({ children }) => (
-        <td className="px-3 py-2.5 text-xs sm:text-sm text-white/85 whitespace-nowrap">
-          {children}
-        </td>
-      ),
-
-      code: ({ children }) => (
-        <code className="rounded-md bg-black/30 px-1.5 py-0.5 text-cyan-200 text-xs">
-          {children}
-        </code>
-      ),
-    }}
-  >
-    {message.text}
-  </ReactMarkdown>
-</div>
+                      <p className="text-white text-sm leading-relaxed">{message.text}</p>
                       <p className="text-xs text-gray-400 mt-1">
                         {message.timestamp.toLocaleTimeString([], { 
                           hour: '2-digit', 

@@ -18,14 +18,13 @@ import {
 } from 'lucide-react';
 import { useAstronomy } from '../hooks/useAstronomy';
 import { useLocation } from '../hooks/useLocation';
-import { OriginalSolarSystem3D } from './OriginalSolarSystem3D';
-import { SolarSystemAR } from './SolarSystemAR';
+import { RealisticSolarSystem3D } from './RealisticSolarSystem3D';
 
 interface ExplorerScreenProps {
   onNavigate: (screen: string) => void;
 }
 
-export interface PlanetViewModel {
+interface PlanetViewModel {
   name: string;
   size: number;
   distance: number;
@@ -190,7 +189,7 @@ export function ExplorerScreen({ onNavigate }: ExplorerScreenProps) {
 
               {/* Solar System Container */}
               <div className="relative flex-1 bg-black/40 rounded-lg overflow-hidden">
-                {viewMode === 'ar' ? <SolarSystemAR planets={planets} /> : <OriginalSolarSystem3D />}
+                <RealisticSolarSystem3D />
 
                 {/* View Mode Indicator */}
                 <div className="absolute top-4 right-4 z-50">
