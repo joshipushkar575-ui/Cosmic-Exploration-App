@@ -1,0 +1,41 @@
+import { supabase } from '../../../lib/supabase';
+
+export interface NasaApod {
+  copyright?: string;
+  date: string;
+  explanation: string;
+  hdurl?: string;
+  media_type: 'image' | 'video';
+  service_version?: string;
+  title: string;
+  url: string;
+}
+
+interface NasaApodResponse {
+  success: boolean;
+  source: string;
+  type: string;
+  data: NasaApod;
+  fetchedAt: string;
+  error?: string;
+}
+
+export async function fetchNasaApod(): Promise<NasaApod> {
+  const { data, error } = await supabase.functions.invoke('space-data', {
+    body: {
+      type: 'apod',
+    },
+  });
+
+  if (error) {
+    throw new Error(error.message || 'Unable to fetch NASA APOD');
+  }
+
+  const response = data as NasaApodResponse;
+
+  if (!response?.success || !response?.data) {
+    throw new Error(response?.error || 'NASA APOD data unavailable');
+  }
+
+  return response.data;
+}

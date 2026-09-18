@@ -1,0 +1,29 @@
+import { ReactNode } from 'react';
+
+interface GlassCardProps {
+  children: ReactNode;
+  className?: string;
+  glow?: boolean;
+  intensity?: 'light' | 'medium' | 'strong';
+}
+
+export function GlassCard({ children, className = '', glow = false, intensity = 'medium' }: GlassCardProps) {
+  const intensityClasses = {
+    light: 'bg-white/5 backdrop-blur-sm border-white/10',
+    medium: 'bg-white/10 backdrop-blur-md border-white/20',
+    strong: 'bg-white/15 backdrop-blur-lg border-white/30'
+  };
+
+  const glowClass = glow ? 'shadow-[0_0_20px_rgba(139,92,246,0.3)] border-violet-500/50' : '';
+
+  return (
+    <div className={`
+      ${intensityClasses[intensity]}
+      ${glowClass}
+      border rounded-xl
+      ${className}
+    `}>
+      {children}
+    </div>
+  );
+}

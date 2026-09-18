@@ -21,12 +21,16 @@ import {
   TrendingUp, 
   TrendingDown,
   RefreshCw,
-  Compass
+  Compass,
+  Landmark
 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useAstronomy } from '../hooks/useAstronomy';
 import { useAstronomicalEvents } from '../hooks/useAstronomicalEvents';
 import { useLocation } from '../hooks/useLocation';
+import { useNasaApod } from '../hooks/useNasaApod';
+import { useNasaNeo } from '../hooks/useNasaNeo';
+import { useNasaDonki } from '../hooks/useNasaDonki';
 
 interface HomeScreenProps {
   onNavigate: (screen: string) => void;
@@ -39,6 +43,16 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
   const { planets, sun, moon, lastUpdated, isLoading, isOffline, refresh } = useAstronomy();
   const { events } = useAstronomicalEvents();
   const { location, setPreset, requestBrowserLocation, isDetecting, presetCities } = useLocation();
+  const { data: nasaApod, isLoading: nasaLoading, error: nasaError, refresh: refreshNasa } = useNasaApod();
+  const { data: nasaNeo, isLoading: neoLoading, error: neoError, refresh: refreshNeo } = useNasaNeo();
+  const {
+    solarFlares,
+    cmes,
+    storms,
+    isLoading: donkiLoading,
+    error: donkiError,
+    refresh: refreshDonki,
+  } = useNasaDonki();
 
   // Get current date and time
   const currentDate = new Date();
@@ -236,7 +250,514 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
           </GlassCard>
         </motion.div>
 
-        {/* Main Content Grid */}
+        {/* NASA Astronomy Picture of the Day */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="mb-6"
+        >
+          <GlassCard className="overflow-hidden" glow intensity="medium">
+            <div className="p-5">
+              <div className="flex items-center justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-xl font-semibold text-white flex items-center gap-2">
+                    <Star className="w-5 h-5 text-cyan-400" />
+                    NASA Astronomy Picture of the Day
+                  </h2>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Real astronomy data from NASA
+                  </p>
+                </div>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={refreshNasa}
+                  disabled={nasaLoading}
+                  className="text-cyan-400 hover:text-cyan-300"
+                  title="Refresh NASA data"
+                >
+                  <RefreshCw
+                    className={`w-4 h-4 ${nasaLoading ? 'animate-spin' : ''}`}
+                  />
+                </Button>
+              </div>
+
+              {nasaLoading && (
+                <div className="rounded-xl bg-white/5 border border-white/10 p-6">
+                  <div className="animate-pulse space-y-4">
+                    <div className="h-64 rounded-xl bg-white/10" />
+                    <div className="h-5 w-2/3 rounded bg-white/10" />
+                    <div className="h-4 w-full rounded bg-white/10" />
+                    <div className="h-4 w-5/6 rounded bg-white/10" />
+                  </div>
+                </div>
+              )}
+
+              {!nasaLoading && nasaError && (
+                <div className="rounded-xl bg-red-500/10 border border-red-400/20 p-5">
+                  <p className="text-red-300 text-sm">
+                    NASA data is temporarily unavailable.
+                  </p>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={refreshNasa}
+                    className="mt-3 text-red-300 hover:text-white"
+                  >
+                    Try again
+                  </Button>
+                </div>
+              )}
+
+              {!nasaLoading && !nasaError && nasaApod && (
+                <div className="grid grid-cols-1 lg:grid-cols-[1.15fr_1fr] gap-5">
+                  <div className="relative overflow-hidden rounded-xl bg-black/30 border border-white/10">
+                    {nasaApod.media_type === 'image' ? (
+                      <img
+                        src={nasaApod.hdurl || nasaApod.url}
+                        alt={nasaApod.title}
+                        className="w-full h-64 lg:h-80 object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="h-64 lg:h-80 flex items-center justify-center text-gray-300 text-sm">
+                        NASA APOD is a video today.
+                      </div>
+                    )}
+
+                    <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                      <span className="text-xs text-cyan-300 font-mono">
+                        NASA • {nasaApod.date}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col justify-center">
+                    <h3 className="text-2xl font-semibold text-white">
+                      {nasaApod.title}
+                    </h3>
+
+                    <p className="text-sm text-gray-300 leading-relaxed mt-3 line-clamp-6">
+                      {nasaApod.explanation}
+                    </p>
+
+                    {nasaApod.copyright && (
+                      <p className="text-xs text-gray-500 mt-3">
+                        © {nasaApod.copyright}
+                      </p>
+                    )}
+
+                    <div className="flex items-center gap-2 mt-4">
+                      {nasaApod.hdurl && (
+                        <a
+                          href={nasaApod.hdurl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center px-3 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-cyan-300 text-xs transition-colors"
+                        >
+                          View HD Image
+                        </a>
+                      )}
+
+                      <span className="text-[10px] text-gray-500 font-mono">
+                        LIVE NASA DATA
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </GlassCard>
+        </motion.div>
+
+        {/* NASA Near-Earth Objects */}
+        <GlassCard className="mb-8">
+          <div className="flex items-center justify-between gap-4 mb-5">
+            <div>
+              <span className="text-xs font-medium tracking-wider text-primary">
+                LIVE NASA DATA
+              </span>
+              <h2 className="text-xl font-semibold mt-1 text-white">
+                Near-Earth Objects
+              </h2>
+              <p className="text-sm text-white/75 mt-1">
+                Real NASA asteroid data for today and the next 3 days
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshNeo}
+              disabled={neoLoading}
+            >
+              <RefreshCw
+                className={`w-4 h-4 mr-2 ${neoLoading ? 'animate-spin' : ''}`}
+              />
+              Refresh
+            </Button>
+          </div>
+
+          {neoLoading && (
+            <div className="space-y-3">
+              {[1, 2, 3].map((item) => (
+                <div
+                  key={item}
+                  className="h-20 rounded-xl bg-muted/40 animate-pulse"
+                />
+              ))}
+            </div>
+          )}
+
+          {!neoLoading && neoError && (
+            <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+              <p className="text-sm text-destructive">{neoError}</p>
+            </div>
+          )}
+
+          {!neoLoading && !neoError && nasaNeo && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-muted/30 px-4 py-3">
+                <span className="text-sm text-white/75">
+                  Objects detected
+                </span>
+                <span className="font-semibold">
+                  {nasaNeo.element_count}
+                </span>
+              </div>
+
+              {Object.entries(nasaNeo.near_earth_objects)
+                .flatMap(([date, objects]) =>
+                  objects.map((object) => ({ date, object }))
+                )
+                .slice(0, 6)
+                .map(({ date, object }) => {
+                  const approach = object.close_approach_data?.[0];
+                  const velocity =
+                    approach?.relative_velocity?.kilometers_per_hour;
+                  const distance =
+                    approach?.miss_distance?.kilometers;
+
+                  return (
+                    <div
+                      key={`${date}-${object.id}`}
+                      className="rounded-xl border border-border/50 bg-background/30 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-white truncate">
+                            {object.name}
+                          </h3>
+                          <p className="text-xs text-white/90 mt-1">
+                            Close approach:{" "}
+                            {approach?.close_approach_date || date}
+                          </p>
+                        </div>
+
+                        {object.is_potentially_hazardous_asteroid && (
+                          <span className="shrink-0 rounded-full px-2 py-1 text-xs border border-destructive/30 text-destructive">
+                            Potentially hazardous
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 mt-3 text-xs">
+                        <div>
+                          <span className="text-white/70">
+                            Distance
+                          </span>
+                          <p className="mt-1 font-medium text-white">
+                            {distance
+                              ? `${Number(distance).toLocaleString()} km`
+                              : "N/A"}
+                          </p>
+                        </div>
+
+                        <div>
+                          <span className="text-white/70">
+                            Velocity
+                          </span>
+                          <p className="mt-1 font-medium text-white">
+                            {velocity
+                              ? `${Number(velocity).toLocaleString()} km/h`
+                              : "N/A"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+        </GlassCard>
+
+        
+{/* NASA DONKI Space Weather */}
+<GlassCard className="mb-8">
+  <div className="flex items-center justify-between gap-4 mb-5">
+    <div>
+      <span className="text-xs font-medium tracking-wider text-primary">
+        LIVE NASA DONKI
+      </span>
+
+      <h2 className="text-xl font-semibold mt-1 text-white">
+        Space Weather
+      </h2>
+
+      <p className="text-sm text-white/75 mt-1">
+        Solar activity detected by NASA over the last 7 days
+      </p>
+    </div>
+
+    <Button
+      variant="outline"
+      size="sm"
+      onClick={refreshDonki}
+      disabled={donkiLoading}
+    >
+      <RefreshCw
+        className={`w-4 h-4 mr-2 ${
+          donkiLoading ? 'animate-spin' : ''
+        }`}
+      />
+      Refresh
+    </Button>
+  </div>
+
+  {donkiLoading && (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {[1, 2, 3].map((item) => (
+        <div
+          key={item}
+          className="h-36 rounded-xl bg-muted/40 animate-pulse"
+        />
+      ))}
+    </div>
+  )}
+
+  {!donkiLoading && donkiError && (
+    <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+      <p className="text-sm text-destructive">
+        {donkiError}
+      </p>
+    </div>
+  )}
+
+  {!donkiLoading && !donkiError && (
+    <>
+      {/* Summary cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        {/* Solar Flares */}
+        <div className="rounded-xl border border-border/50 bg-background/30 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-white/80">
+              ☀️ Solar Flares
+            </span>
+
+            <span className="text-xs text-white/60">
+              NASA
+            </span>
+          </div>
+
+          <p className="text-3xl font-semibold text-white mt-3">
+            {solarFlares.length}
+          </p>
+
+          <p className="text-xs text-white/70 mt-1">
+            Events in last 7 days
+          </p>
+
+          {solarFlares[0]?.classType && (
+            <div className="mt-4 rounded-lg bg-background/40 px-3 py-2">
+              <span className="text-xs text-white/60">
+                Latest class
+              </span>
+
+              <p className="text-sm font-semibold text-white mt-1">
+                {solarFlares[0].classType}
+              </p>
+            </div>
+          )}
+
+          {solarFlares[0]?.peakTime && (
+            <p className="text-xs text-white/70 mt-3">
+              Peak:{" "}
+              {new Date(
+                solarFlares[0].peakTime
+              ).toLocaleString()}
+            </p>
+          )}
+        </div>
+
+        {/* CME */}
+        <div className="rounded-xl border border-border/50 bg-background/30 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-white/80">
+              🌋 CME
+            </span>
+
+            <span className="text-xs text-white/60">
+              NASA
+            </span>
+          </div>
+
+          <p className="text-3xl font-semibold text-white mt-3">
+            {cmes.length}
+          </p>
+
+          <p className="text-xs text-white/70 mt-1">
+            Coronal mass ejections
+          </p>
+
+          {cmes[0]?.startTime && (
+            <div className="mt-4 rounded-lg bg-background/40 px-3 py-2">
+              <span className="text-xs text-white/60">
+                Latest event
+              </span>
+
+              <p className="text-sm font-semibold text-white mt-1">
+                {new Date(
+                  cmes[0].startTime
+                ).toLocaleString()}
+              </p>
+            </div>
+          )}
+
+          {cmes[0]?.sourceLocation && (
+            <p className="text-xs text-white/70 mt-3">
+              Source: {cmes[0].sourceLocation}
+            </p>
+          )}
+        </div>
+
+        {/* Geomagnetic Storms */}
+        <div className="rounded-xl border border-border/50 bg-background/30 p-4">
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-white/80">
+              🌍 Geomagnetic Storms
+            </span>
+
+            <span className="text-xs text-white/60">
+              NASA
+            </span>
+          </div>
+
+          <p className="text-3xl font-semibold text-white mt-3">
+            {storms.length}
+          </p>
+
+          <p className="text-xs text-white/70 mt-1">
+            Events in last 7 days
+          </p>
+
+          {storms[0]?.allKpIndex?.[0]?.kpIndex !== undefined && (
+            <div className="mt-4 rounded-lg bg-background/40 px-3 py-2">
+              <span className="text-xs text-white/60">
+                Latest Kp index
+              </span>
+
+              <p className="text-sm font-semibold text-white mt-1">
+                {storms[0].allKpIndex[0].kpIndex}
+              </p>
+            </div>
+          )}
+
+          {storms[0]?.startTime && (
+            <p className="text-xs text-white/70 mt-3">
+              Started:{" "}
+              {new Date(
+                storms[0].startTime
+              ).toLocaleString()}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* VYOM Space Weather Alert */}
+      <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 p-4">
+        <div className="flex items-start gap-3">
+          <div className="text-xl">
+            🔔
+          </div>
+
+          <div className="min-w-0">
+            <p className="font-medium text-white">
+              VYOM Space Weather Alert
+            </p>
+
+            <p className="text-sm text-white/75 mt-1">
+              {storms.length > 0
+                ? `NASA has detected ${storms.length} geomagnetic storm event${
+                    storms.length === 1 ? '' : 's'
+                  } in the selected 7-day window.`
+                : solarFlares.length > 0
+                ? `NASA has detected ${solarFlares.length} solar flare event${
+                    solarFlares.length === 1 ? '' : 's'
+                  } in the selected 7-day window.`
+                : 'No geomagnetic storm events were returned for the selected 7-day window.'}
+            </p>
+
+            <p className="text-xs text-white/55 mt-2">
+              Powered by NASA DONKI
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent flare timeline */}
+      {solarFlares.length > 0 && (
+        <div className="mt-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-medium text-white">
+              Recent Solar Flare Activity
+            </h3>
+
+            <span className="text-xs text-white/60">
+              {solarFlares.length} events
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {solarFlares.slice(0, 4).map((flare, index) => (
+              <div
+                key={flare.flrID || `${flare.beginTime}-${index}`}
+                className="flex items-center justify-between gap-4 rounded-lg border border-border/40 bg-background/20 px-3 py-3"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm text-white">
+                    Solar flare{" "}
+                    {flare.classType
+                      ? `• ${flare.classType}`
+                      : ''}
+                  </p>
+
+                  <p className="text-xs text-white/60 mt-1">
+                    {flare.beginTime
+                      ? new Date(
+                          flare.beginTime
+                        ).toLocaleString()
+                      : 'Time unavailable'}
+                  </p>
+                </div>
+
+                {flare.sourceLocation && (
+                  <span className="shrink-0 text-xs text-white/60">
+                    {flare.sourceLocation}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
+  )}
+</GlassCard>
+
+{/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
           {/* Live Planetary Positions */}
           <motion.div
@@ -411,6 +932,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {[
                 { label: 'Explore Cosmos', icon: Rocket, screen: 'explorer', gradient: 'from-purple-500 to-pink-500' },
+                { label: 'ISRO', icon: Landmark, screen: 'isro', gradient: 'from-orange-500 to-green-500' },
                 { label: 'Space Events', icon: Calendar, screen: 'events', gradient: 'from-blue-500 to-cyan-500' },
                 { label: 'Cosmic Game', icon: Zap, screen: 'game', gradient: 'from-cyan-500 to-blue-500' },
                 { label: 'AI Assistant', icon: Bot, screen: 'chat', gradient: 'from-green-500 to-teal-500' },

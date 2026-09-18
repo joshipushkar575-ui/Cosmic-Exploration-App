@@ -11,6 +11,7 @@ import { KidsSection } from './components/KidsSection';
 import { TeenagerSection } from './components/TeenagerSection';
 import { AdultSection } from './components/AdultSection';
 import { SeniorSection } from './components/SeniorSection';
+import { ISROScreen } from './components/ISROScreen';
 
 type Screen =
   | 'auth'
@@ -23,7 +24,8 @@ type Screen =
   | 'kids'
   | 'teenager'
   | 'adult'
-  | 'senior';
+  | 'senior'
+  | 'isro';
 
 interface UserData {
   name: string;
@@ -100,6 +102,8 @@ export default function App() {
 
       case 'senior':
         return <SeniorSection onNavigate={handleNavigate} />;
+      case 'isro':
+        return <ISROScreen onNavigate={handleNavigate} />;
 
       default:
         return <AuthScreen onAuthComplete={handleAuthComplete} />;
