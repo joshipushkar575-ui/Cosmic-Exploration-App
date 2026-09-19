@@ -22,7 +22,8 @@ import {
   TrendingDown,
   RefreshCw,
   Compass,
-  Landmark
+  Landmark,
+  Satellite
 } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { useAstronomy } from '../hooks/useAstronomy';
@@ -109,6 +110,20 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
               {/* Location Badge with Selector */}
               <div className="relative">
                 <button
+        onClick={() => onNavigate('earth')}
+        className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white transition hover:bg-white/10"
+      >
+        <Globe className="h-5 w-5" />
+        <span>Earth Explorer</span>
+      </button>
+      <button
+        onClick={() => onNavigate('satellite')}
+        className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-white transition hover:bg-white/10"
+      >
+        <Satellite className="h-5 w-5" />
+        <span>ISS Tracker</span>
+      </button>
+      <button
                   onClick={() => setShowLocationPicker(!showLocationPicker)}
                   className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs text-violet-300 transition-colors cursor-pointer"
                   title="Click to change location or detect GPS"

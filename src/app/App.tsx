@@ -12,6 +12,8 @@ import { TeenagerSection } from './components/TeenagerSection';
 import { AdultSection } from './components/AdultSection';
 import { SeniorSection } from './components/SeniorSection';
 import { ISROScreen } from './components/ISROScreen';
+import SatelliteTrackerScreen from './components/SatelliteTrackerScreen';
+import EarthExplorerScreen from './components/EarthExplorerScreen';
 
 type Screen =
   | 'auth'
@@ -25,7 +27,9 @@ type Screen =
   | 'teenager'
   | 'adult'
   | 'senior'
-  | 'isro';
+  | 'isro'
+  | 'satellite'
+  | 'earth';
 
 interface UserData {
   name: string;
@@ -102,6 +106,12 @@ export default function App() {
 
       case 'senior':
         return <SeniorSection onNavigate={handleNavigate} />;
+      case 'satellite':
+        return <SatelliteTrackerScreen onNavigate={handleNavigate} />;
+
+      case 'earth':
+        return <EarthExplorerScreen onNavigate={handleNavigate} />;
+
       case 'isro':
         return <ISROScreen onNavigate={handleNavigate} />;
 
