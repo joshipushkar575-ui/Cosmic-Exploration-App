@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Activity, Globe2, Radio, Rocket, Satellite } from "lucide-react";
+import { Activity, Globe2, Radio, Rocket, Satellite, MessageCircle } from "lucide-react";
 import { supabase } from "../../lib/supabase";
 import { getLiveISSPosition } from "../services/api/satelliteService";
 
@@ -80,6 +80,21 @@ export default function LiveSpaceDataCenterScreen({
 
     return () => window.clearInterval(timer);
   }, []);
+
+  function askVYOM(objectName: string, telemetry: unknown) {
+    sessionStorage.setItem(
+      "vyom_space_ai_context",
+      JSON.stringify({
+        object: objectName,
+        telemetry,
+        source: "VYOM Live Space Data Center",
+        instruction:
+          "Use the supplied live telemetry as the primary factual context. Do not invent unavailable values. Clearly state when a requested value is unavailable.",
+      }),
+    );
+
+    onNavigate("chat");
+  }
 
   const Card = ({
     icon,
@@ -193,6 +208,14 @@ export default function LiveSpaceDataCenterScreen({
                 <Radio size={12} />
                 Where The ISS At? live telemetry
               </div>
+
+              <button
+                onClick={() => askVYOM("International Space Station", iss)}
+                className="mt-4 flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-200 transition hover:bg-cyan-400/20"
+              >
+                <MessageCircle size={14} />
+                Ask VYOM about ISS
+              </button>
             </Card>
 
             <Card
@@ -215,6 +238,14 @@ export default function LiveSpaceDataCenterScreen({
               <div className="mt-4 text-[10px] text-white/25">
                 Position relative to Earth-centered JPL reference frame
               </div>
+
+              <button
+                onClick={() => askVYOM("James Webb Space Telescope", jwst)}
+                className="mt-4 flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-200 transition hover:bg-cyan-400/20"
+              >
+                <MessageCircle size={14} />
+                Ask VYOM about JWST
+              </button>
             </Card>
 
             <Card
@@ -246,6 +277,14 @@ export default function LiveSpaceDataCenterScreen({
               <div className="mt-4 text-[10px] text-white/25">
                 NASA/JPL Horizons live ephemeris
               </div>
+
+              <button
+                onClick={() => askVYOM("Hubble Space Telescope", hubble)}
+                className="mt-4 flex items-center gap-2 rounded-xl border border-cyan-400/20 bg-cyan-400/10 px-3 py-2 text-xs text-cyan-200 transition hover:bg-cyan-400/20"
+              >
+                <MessageCircle size={14} />
+                Ask VYOM about Hubble
+              </button>
             </Card>
 
             <div className="rounded-3xl border border-cyan-400/10 bg-gradient-to-br from-cyan-400/[0.08] to-transparent p-5">
