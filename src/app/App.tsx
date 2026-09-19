@@ -15,6 +15,7 @@ import { ISROScreen } from './components/ISROScreen';
 import SatelliteTrackerScreen from './components/SatelliteTrackerScreen';
 import EarthExplorerScreen from './components/EarthExplorerScreen';
 import SpacecraftTrackerScreen from './components/SpacecraftTrackerScreen';
+import LiveSpaceDataCenterScreen from './components/LiveSpaceDataCenterScreen';
 
 type Screen =
   | 'auth'
@@ -31,7 +32,8 @@ type Screen =
   | 'isro'
   | 'satellite'
   | 'earth'
-  | 'spacecraft';
+  | 'spacecraft'
+  | 'live-space-data';
 
 interface UserData {
   name: string;
@@ -116,6 +118,11 @@ export default function App() {
 
       case 'spacecraft':
         return <SpacecraftTrackerScreen onNavigate={handleNavigate} />;
+
+      case 'live-space-data':
+        return (
+          <LiveSpaceDataCenterScreen onNavigate={handleNavigate} />
+        );
 
       case 'isro':
         return <ISROScreen onNavigate={handleNavigate} />;
