@@ -556,6 +556,7 @@ STRICT TELEMETRY RULES:
 
 const enrichedInput = `${isroContextInstruction}
 
+${spaceTelemetryInstruction}
 
 USER:
 ${userQuestion}

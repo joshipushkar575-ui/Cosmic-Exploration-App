@@ -16,6 +16,7 @@ import SatelliteTrackerScreen from './components/SatelliteTrackerScreen';
 import EarthExplorerScreen from './components/EarthExplorerScreen';
 import SpacecraftTrackerScreen from './components/SpacecraftTrackerScreen';
 import LiveSpaceDataCenterScreen from './components/LiveSpaceDataCenterScreen';
+import SolarSystemExplorerScreen from './components/solar-system/SolarSystemExplorerScreen';
 
 type Screen =
   | 'auth'
@@ -33,7 +34,8 @@ type Screen =
   | 'satellite'
   | 'earth'
   | 'spacecraft'
-  | 'live-space-data';
+  | 'live-space-data'
+  | 'solar-system';
 
 interface UserData {
   name: string;
@@ -59,10 +61,10 @@ export default function App() {
     if (storedUserData) {
       const user = JSON.parse(storedUserData) as UserData;
       setUserData(user);
-      setCurrentScreen(getAgeBasedScreen(user.age));
-    } else {
-      setCurrentScreen('home');
     }
+
+    // Always open Home after successful authentication.
+    setCurrentScreen('home');
   };
 
   const handleNavigate = (screen: string) => {
@@ -122,6 +124,11 @@ export default function App() {
       case 'live-space-data':
         return (
           <LiveSpaceDataCenterScreen onNavigate={handleNavigate} />
+        );
+
+      case 'solar-system':
+        return (
+          <SolarSystemExplorerScreen onNavigate={handleNavigate} />
         );
 
       case 'isro':

@@ -36,6 +36,7 @@ Deno.serve(async (req) => {
 
     const target = String(body.target ?? "599");
     const isSpacecraft = SPACECRAFT_TARGETS.has(target);
+    const vectorRequest = Boolean(body.vector) && !isSpacecraft;
 
     if (!TARGET_NAMES[target]) {
       return new Response(
@@ -88,23 +89,40 @@ Deno.serve(async (req) => {
           REF_SYSTEM: "ICRF",
           CSV_FORMAT: "YES",
         })
-      : new URLSearchParams({
-          format: "json",
-          COMMAND: `'${target}'`,
-          OBJ_DATA: "NO",
-          MAKE_EPHEM: "YES",
-          EPHEM_TYPE: "OBSERVER",
-          CENTER: "coord",
-          COORD_TYPE: "GEODETIC",
-          SITE_COORD: "'75.7873,26.9124,0'",
-          START_TIME: `'${start}'`,
-          STOP_TIME: `'${stop}'`,
-          STEP_SIZE: "'1 m'",
-          QUANTITIES: "'4,9,20,23,24,29'",
-          ANG_FORMAT: "DEG",
-          APPARENT: "AIRLESS",
-          CSV_FORMAT: "YES",
-        });
+      : vectorRequest
+        ? new URLSearchParams({
+            format: "json",
+            COMMAND: `'${target}'`,
+            OBJ_DATA: "NO",
+            MAKE_EPHEM: "YES",
+            EPHEM_TYPE: "VECTORS",
+            CENTER: "500@10",
+            START_TIME: `'${start}'`,
+            STOP_TIME: `'${stop}'`,
+            STEP_SIZE: "'1 m'",
+            OUT_UNITS: "KM-S",
+            VEC_TABLE: "2",
+            VEC_CORR: "NONE",
+            REF_SYSTEM: "ICRF",
+            CSV_FORMAT: "YES",
+          })
+        : new URLSearchParams({
+            format: "json",
+            COMMAND: `'${target}'`,
+            OBJ_DATA: "NO",
+            MAKE_EPHEM: "YES",
+            EPHEM_TYPE: "OBSERVER",
+            CENTER: "coord",
+            COORD_TYPE: "GEODETIC",
+            SITE_COORD: "'75.7873,26.9124,0'",
+            START_TIME: `'${start}'`,
+            STOP_TIME: `'${stop}'`,
+            STEP_SIZE: "'1 m'",
+            QUANTITIES: "'4,9,20,23,24,29'",
+            ANG_FORMAT: "DEG",
+            APPARENT: "AIRLESS",
+            CSV_FORMAT: "YES",
+          });
 
     const response = await fetch(
       `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`,
@@ -291,6 +309,74 @@ Deno.serve(async (req) => {
           target,
           targetName: TARGET_NAMES[target],
           spacecraft: true,
+          position,
+          fetchedAt: new Date().toISOString(),
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    /*
+     * Heliocentric planet vector data.
+     *
+     * CENTER=500@10 means the origin is the center of the Sun.
+     * Horizons VEC_TABLE=2 returns position and velocity.
+     */
+    if (vectorRequest) {
+      const numericValues = columns
+        .map((value) => Number.parseFloat(value))
+        .filter((value) => Number.isFinite(value));
+
+      const position = {
+        x: numericValues[1],
+        y: numericValues[2],
+        z: numericValues[3],
+        vx: numericValues[4],
+        vy: numericValues[5],
+        vz: numericValues[6],
+        epoch: columns[0] ?? null,
+        units: "km / km/s",
+        reference: "ICRF",
+        center: "Sun",
+      };
+
+      const hasValidPosition = [
+        position.x,
+        position.y,
+        position.z,
+      ].every(Number.isFinite);
+
+      if (!hasValidPosition) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            source: "NASA/JPL Horizons",
+            target,
+            targetName: TARGET_NAMES[target],
+            error: "JPL returned unavailable planetary vector data.",
+          }),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          source: "NASA/JPL Horizons",
+          target,
+          targetName: TARGET_NAMES[target],
+          vector: true,
           position,
           fetchedAt: new Date().toISOString(),
         }),

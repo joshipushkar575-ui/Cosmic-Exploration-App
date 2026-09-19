@@ -955,6 +955,7 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                 { label: 'Spacecraft Tracker', icon: Rocket, screen: 'spacecraft', gradient: 'from-cyan-500 to-blue-600' },
     { label: 'Live Space Data Center', icon: Activity, screen: 'live-space-data', gradient: 'from-cyan-400 to-blue-600' },
                 { label: 'Earth Explorer', icon: Globe, screen: 'earth', gradient: 'from-blue-500 to-indigo-600' },
+                { label: 'Solar System Explorer', icon: Compass, screen: 'solar-system', gradient: 'from-orange-500 via-purple-500 to-cyan-500' },
                 { label: 'Satellite Tracker', icon: Star, screen: 'satellite', gradient: 'from-violet-500 to-purple-600' },
                 { label: 'Profile', icon: Star, screen: 'profile', gradient: 'from-orange-500 to-red-500' },
               ].map((action, index) => (

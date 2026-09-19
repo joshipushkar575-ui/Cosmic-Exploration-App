@@ -82,6 +82,29 @@ export function ChatScreen({ onNavigate }: ChatScreenProps) {
   ]);
   
   const [inputText, setInputText] = useState('');
+
+  useEffect(() => {
+    const raw = sessionStorage.getItem("vyom_space_ai_context");
+    if (!raw) return;
+
+    try {
+      const context = JSON.parse(raw) as { object?: string };
+      const objectName = context.object ?? "spacecraft";
+
+      const question =
+        objectName === "International Space Station"
+          ? "What is the current live telemetry of the ISS? Explain its current position, altitude, and velocity using the supplied live data."
+          : objectName === "James Webb Space Telescope"
+            ? "What is the current live telemetry of the James Webb Space Telescope? Explain its current position using the supplied NASA/JPL data."
+            : objectName === "Hubble Space Telescope"
+              ? "What is the current live telemetry of the Hubble Space Telescope? Explain its current position using the supplied NASA/JPL data."
+              : `Tell me about the current telemetry of ${objectName} using the supplied live data.`;
+
+      setInputText(question);
+    } catch {
+      // Ignore malformed telemetry context.
+    }
+  }, []);
 const [ar00LunarPhase, setAr00LunarPhase] =
     useState<Ar00Response<Ar00LunarPhase> | null>(null);
 
