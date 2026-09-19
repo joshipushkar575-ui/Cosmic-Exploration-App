@@ -951,6 +951,9 @@ export function HomeScreen({ onNavigate }: HomeScreenProps) {
                 { label: 'Space Events', icon: Calendar, screen: 'events', gradient: 'from-blue-500 to-cyan-500' },
                 { label: 'Cosmic Game', icon: Zap, screen: 'game', gradient: 'from-cyan-500 to-blue-500' },
                 { label: 'AI Assistant', icon: Bot, screen: 'chat', gradient: 'from-green-500 to-teal-500' },
+                { label: 'Spacecraft Tracker', icon: Rocket, screen: 'spacecraft', gradient: 'from-cyan-500 to-blue-600' },
+                { label: 'Earth Explorer', icon: Globe, screen: 'earth', gradient: 'from-blue-500 to-indigo-600' },
+                { label: 'Satellite Tracker', icon: Star, screen: 'satellite', gradient: 'from-violet-500 to-purple-600' },
                 { label: 'Profile', icon: Star, screen: 'profile', gradient: 'from-orange-500 to-red-500' },
               ].map((action, index) => (
                 <motion.button

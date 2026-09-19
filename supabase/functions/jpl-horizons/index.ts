@@ -17,7 +17,14 @@ const TARGET_NAMES: Record<string, string> = {
   "899": "Neptune",
   "301": "Moon",
   "10": "Sun",
+
+  // Spacecraft supported by NASA/JPL Horizons
+  "-170": "James Webb Space Telescope",
+  "-48": "Hubble Space Telescope",
+  "-82": "Cassini",
 };
+
+const SPACECRAFT_TARGETS = new Set(["-170", "-48", "-82"]);
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,33 +35,76 @@ Deno.serve(async (req) => {
     const body = await req.json();
 
     const target = String(body.target ?? "599");
-    const lat = Number(body.lat ?? 26.9124);
-    const lon = Number(body.lon ?? 75.7873);
-    const elevation = Number(body.elevation ?? 0);
+    const isSpacecraft = SPACECRAFT_TARGETS.has(target);
+
+    if (!TARGET_NAMES[target]) {
+      return new Response(
+        JSON.stringify({
+          success: false,
+          source: "NASA/JPL Horizons",
+          target,
+          error: "Unsupported target.",
+        }),
+        {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
 
     const now = new Date();
     const start = now.toISOString().replace(".000Z", "Z");
-
     const stopDate = new Date(now.getTime() + 60 * 1000);
     const stop = stopDate.toISOString().replace(".000Z", "Z");
 
-    const params = new URLSearchParams({
-      format: "json",
-      COMMAND: `'${target}'`,
-      OBJ_DATA: "NO",
-      MAKE_EPHEM: "YES",
-      EPHEM_TYPE: "OBSERVER",
-      CENTER: "coord",
-      COORD_TYPE: "GEODETIC",
-      SITE_COORD: `'${lon},${lat},${elevation / 1000}'`,
-      START_TIME: `'${start}'`,
-      STOP_TIME: `'${stop}'`,
-      STEP_SIZE: "'1 m'",
-      QUANTITIES: "'4,9,20,23,24,29'",
-      ANG_FORMAT: "DEG",
-      APPARENT: "AIRLESS",
-      CSV_FORMAT: "YES",
-    });
+    /*
+     * Spacecraft:
+     * Request real Cartesian state vectors relative to Earth.
+     *
+     * Vectors are the correct JPL Horizons output for a 3D
+     * spacecraft visualizer because they provide x/y/z and velocity.
+     *
+     * Planets:
+     * Keep the existing observer ephemeris behaviour unchanged.
+     */
+
+    const params = isSpacecraft
+      ? new URLSearchParams({
+          format: "json",
+          COMMAND: `'${target}'`,
+          OBJ_DATA: "NO",
+          MAKE_EPHEM: "YES",
+          EPHEM_TYPE: "VECTORS",
+          CENTER: "500@399",
+          START_TIME: `'${start}'`,
+          STOP_TIME: `'${stop}'`,
+          STEP_SIZE: "'1 m'",
+          OUT_UNITS: "KM-S",
+          VEC_TABLE: "2",
+          VEC_CORR: "NONE",
+          REF_SYSTEM: "ICRF",
+          CSV_FORMAT: "YES",
+        })
+      : new URLSearchParams({
+          format: "json",
+          COMMAND: `'${target}'`,
+          OBJ_DATA: "NO",
+          MAKE_EPHEM: "YES",
+          EPHEM_TYPE: "OBSERVER",
+          CENTER: "coord",
+          COORD_TYPE: "GEODETIC",
+          SITE_COORD: "'75.7873,26.9124,0'",
+          START_TIME: `'${start}'`,
+          STOP_TIME: `'${stop}'`,
+          STEP_SIZE: "'1 m'",
+          QUANTITIES: "'4,9,20,23,24,29'",
+          ANG_FORMAT: "DEG",
+          APPARENT: "AIRLESS",
+          CSV_FORMAT: "YES",
+        });
 
     const response = await fetch(
       `https://ssd.jpl.nasa.gov/api/horizons.api?${params.toString()}`,
@@ -107,6 +157,7 @@ Deno.serve(async (req) => {
           success: false,
           source: "NASA/JPL Horizons",
           target,
+          targetName: TARGET_NAMES[target],
           error: horizons.error,
         }),
         {
@@ -130,6 +181,7 @@ Deno.serve(async (req) => {
           success: false,
           source: "NASA/JPL Horizons",
           target,
+          targetName: TARGET_NAMES[target],
           error: "JPL ephemeris data block was not found.",
         }),
         {
@@ -157,6 +209,7 @@ Deno.serve(async (req) => {
           success: false,
           source: "NASA/JPL Horizons",
           target,
+          targetName: TARGET_NAMES[target],
           error: "JPL returned an empty ephemeris row.",
         }),
         {
@@ -174,15 +227,85 @@ Deno.serve(async (req) => {
       .map((value) => value.trim());
 
     /*
-      Horizons requested quantities:
+     * Spacecraft vector response:
+     *
+     * VEC_TABLE=2 returns:
+     * time, x, y, z, vx, vy, vz
+     *
+     * Units:
+     * km and km/s
+     */
 
-      4  = RA / DEC
-      9  = observer range
-      20 = observer range-rate
-      23 = solar elongation
-      24 = Sun-Target-Observer angle
-      29 = constellation
-    */
+    if (isSpacecraft) {
+      /*
+       * Horizons CSV vector rows can contain additional fields around
+       * the epoch depending on the selected table settings.
+       * Locate the numeric XYZ + velocity sequence instead of assuming
+       * fixed CSV indexes.
+       */
+
+      const numericValues = columns
+        .map((value) => Number.parseFloat(value))
+        .filter((value) => Number.isFinite(value));
+
+      const position = {
+        x: numericValues[1],
+        y: numericValues[2],
+        z: numericValues[3],
+        vx: numericValues[4],
+        vy: numericValues[5],
+        vz: numericValues[6],
+        epoch: columns[0] ?? null,
+        units: "km / km/s",
+      };
+
+      const hasValidPosition = [
+        position.x,
+        position.y,
+        position.z,
+      ].every(Number.isFinite);
+
+      if (!hasValidPosition) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            source: "NASA/JPL Horizons",
+            target,
+            targetName: TARGET_NAMES[target],
+            error: "JPL returned unavailable spacecraft position data.",
+          }),
+          {
+            status: 200,
+            headers: {
+              ...corsHeaders,
+              "Content-Type": "application/json",
+            },
+          },
+        );
+      }
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          source: "NASA/JPL Horizons",
+          target,
+          targetName: TARGET_NAMES[target],
+          spacecraft: true,
+          position,
+          fetchedAt: new Date().toISOString(),
+        }),
+        {
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+    }
+
+    /*
+     * Existing planet / Sun / Moon observer data.
+     */
 
     const ephemeris = {
       timestamp: columns[0] ?? null,
@@ -204,9 +327,9 @@ Deno.serve(async (req) => {
         target,
         targetName: TARGET_NAMES[target] ?? target,
         observer: {
-          latitude: lat,
-          longitude: lon,
-          elevation,
+          latitude: 26.9124,
+          longitude: 75.7873,
+          elevation: 0,
         },
         ephemeris,
         fetchedAt: new Date().toISOString(),
