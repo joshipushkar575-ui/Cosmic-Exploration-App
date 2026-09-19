@@ -16,6 +16,7 @@ type RequestBody = {
   message?: string;
   messages?: ChatMessage[];
   isroContext?: Record<string, unknown>;
+  spaceTelemetryContext?: Record<string, unknown>;
   astronomy?: {
     location?: unknown;
     lastUpdated?: unknown;
@@ -345,6 +346,7 @@ Deno.serve(async (req) => {
     const body = (await req.json()) as RequestBody;
     const message = body.message?.trim();
     const isroContext = body.isroContext;
+    const spaceTelemetryContext = body.spaceTelemetryContext;
 
     const groqKey = Deno.env.get("GROQ_API_KEY")?.trim();
     const geminiKey = Deno.env.get("GEMINI_API_KEY")?.trim();
@@ -529,6 +531,26 @@ STRICT ISRO RULES:
 - If a requested mission-specific fact is not present in the supplied context, clearly say that the information is unavailable.
 - Clearly distinguish mission-specific facts from general scientific knowledge.
 - Explain complex ISRO science in simple language when appropriate.
+`
+  : "";
+
+
+const spaceTelemetryInstruction = spaceTelemetryContext
+  ? `
+VYOM LIVE SPACE TELEMETRY CONTEXT:
+
+${JSON.stringify(spaceTelemetryContext)}
+
+STRICT TELEMETRY RULES:
+
+- Treat the supplied telemetry as the primary factual source for the tracked object in this response.
+- Use only values actually present in the supplied telemetry.
+- Do NOT invent, estimate, extrapolate, or fabricate missing telemetry values.
+- Clearly state when a requested telemetry value is unavailable.
+- Preserve the telemetry source and object identity exactly as supplied.
+- Distinguish live telemetry from general scientific knowledge.
+- For historical spacecraft with unavailable current ephemeris, explicitly say that current telemetry is unavailable rather than guessing a position.
+
 `
   : "";
 

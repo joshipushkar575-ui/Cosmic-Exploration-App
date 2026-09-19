@@ -52,14 +52,23 @@ export function ChatScreen({ onNavigate }: ChatScreenProps) {
   const [isroAiContext, setIsroAiContext] =
     useState<Record<string, unknown> | null>(null);
 
+  const [spaceAiContext, setSpaceAiContext] =
+    useState<Record<string, unknown> | null>(null);
+
   useEffect(() => {
     try {
-      const raw = sessionStorage.getItem("vyom_isro_ai_context");
-      if (raw) {
-        setIsroAiContext(JSON.parse(raw));
+      const isroRaw = sessionStorage.getItem("vyom_isro_ai_context");
+      if (isroRaw) {
+        setIsroAiContext(JSON.parse(isroRaw));
+      }
+
+      const spaceRaw = sessionStorage.getItem("vyom_space_ai_context");
+      if (spaceRaw) {
+        setSpaceAiContext(JSON.parse(spaceRaw));
       }
     } catch {
       setIsroAiContext(null);
+      setSpaceAiContext(null);
     }
   }, []);
 
@@ -880,6 +889,9 @@ const [ar00LunarPhase, setAr00LunarPhase] =
           message: messageText,
           ...(isroAiContext
             ? { isroContext: isroAiContext }
+            : {}),
+          ...(spaceAiContext
+            ? { spaceTelemetryContext: spaceAiContext }
             : {}),
           messages: [...messages, userMessage].map(message => ({
             role: message.sender === 'user' ? 'user' : 'assistant',
